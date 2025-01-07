@@ -39,7 +39,7 @@ function initChart() {
                     position: 'bottom',
                     title: {
                         display: true,
-                        text: 'Time (hours)'
+                        text: 'Time (minutes)'
                     }
                 }
             }
@@ -47,14 +47,66 @@ function initChart() {
     });
 }
 
-// Convert time to hours for consistent calculations
-function convertToHours(value, unit) {
+// Switch between manual and CSV upload tabs
+function switchTab(tabName) {
+    // Update button states
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    document.querySelector(`[onclick="switchTab('${tabName}')"]`).classList.add('active');
+
+    // Update tab content visibility
+    document.querySelectorAll('.tab-content').forEach(content => {
+        content.classList.remove('active');
+    });
+    if (tabName === 'manual') {
+        document.getElementById('manual-entry').classList.add('active');
+    } else {
+        document.getElementById('csv-upload').classList.add('active');
+    }
+}
+
+// Add manual measurement
+function addMeasurement() {
+    const time = parseFloat(document.getElementById('time').value);
+    const do_level = parseFloat(document.getElementById('do').value);
+    const turbidity = parseFloat(document.getElementById('turbidity').value);
+    const ph = parseFloat(document.getElementById('ph').value);
+
+    if (isNaN(time) || isNaN(do_level) || isNaN(turbidity) || isNaN(ph)) {
+        alert('Please fill in all fields with valid numbers');
+        return;
+    }
+
+    measurements.push({
+        time,
+        do_level,
+        turbidity,
+        ph
+    });
+
+    // Sort measurements by time
+    measurements.sort((a, b) => a.time - b.time);
+    
+    // Update displays
+    updateTable();
+    updateChart();
+    
+    // Clear input fields
+    document.getElementById('time').value = '';
+    document.getElementById('do').value = '';
+    document.getElementById('turbidity').value = '';
+    document.getElementById('ph').value = '';
+}
+
+// Convert time to minutes for consistent calculations
+function convertToMinutes(value, unit) {
     switch(unit) {
-        case 'hours': return value;
-        case 'days': return value * 24;
-        case 'weeks': return value * 24 * 7;
-        case 'months': return value * 24 * 30; // approximate
-        case 'years': return value * 24 * 365; // approximate
+        case 'hours': return value * 60;
+        case 'days': return value * 24 * 60;
+        case 'weeks': return value * 7 * 24 * 60;
+        case 'months': return value * 30 * 24 * 60; // approximate
+        case 'years': return value * 365 * 24 * 60; // approximate
         default: return value;
     }
 }
@@ -62,7 +114,7 @@ function convertToHours(value, unit) {
 // Predict DO level
 function predictDO() {
     if (measurements.length < 2) {
-        alert('Please upload historical data first');
+        alert('Please add at least 2 measurements first');
         return;
     }
 
@@ -74,52 +126,21 @@ function predictDO() {
         return;
     }
 
-    const futureTimeHours = convertToHours(timeValue, timeUnit);
+    const futureTimeMinutes = convertToMinutes(timeValue, timeUnit);
     const times = measurements.map(m => m.time);
     const do_levels = measurements.map(m => m.do_level);
     
-    // Calculate seasonal components if enough data
-    const seasonalPattern = calculateSeasonalPattern(measurements);
+    // Calculate regression
     const regression = linearRegression(times, do_levels);
     
-    // Predict base value using linear regression
-    const baseValue = regression.slope * futureTimeHours + regression.intercept;
-    
-    // Add seasonal adjustment if available
-    const seasonalAdjustment = seasonalPattern[Math.floor(futureTimeHours % 24)] || 0;
-    const predictedDO = baseValue + seasonalAdjustment;
+    // Predict DO level
+    const predictedDO = regression.slope * futureTimeMinutes + regression.intercept;
 
     // Update prediction display
     displayPrediction(predictedDO, timeValue, timeUnit);
     
     // Update chart with prediction
-    updateChartWithPrediction(regression, futureTimeHours, predictedDO);
-}
-
-// Calculate seasonal patterns in the data
-function calculateSeasonalPattern(data) {
-    if (data.length < 24) return {}; // Need at least 24 hours of data
-    
-    const hourlyAverages = {};
-    const hourlyCount = {};
-    
-    // Group by hour and calculate averages
-    data.forEach(m => {
-        const hour = Math.floor(m.time % 24);
-        if (!hourlyAverages[hour]) {
-            hourlyAverages[hour] = 0;
-            hourlyCount[hour] = 0;
-        }
-        hourlyAverages[hour] += m.do_level;
-        hourlyCount[hour]++;
-    });
-    
-    // Calculate average for each hour
-    Object.keys(hourlyAverages).forEach(hour => {
-        hourlyAverages[hour] = hourlyAverages[hour] / hourlyCount[hour];
-    });
-    
-    return hourlyAverages;
+    updateChartWithPrediction(regression, futureTimeMinutes, predictedDO);
 }
 
 // Display prediction result
@@ -128,7 +149,7 @@ function displayPrediction(predictedDO, timeValue, timeUnit) {
     resultDiv.innerHTML = `
         <h3>Prediction Results:</h3>
         <p>Predicted DO Level in ${timeValue} ${timeUnit}: <strong>${predictedDO.toFixed(2)} mg/L</strong></p>
-        <p>Confidence Level: Medium (based on historical data patterns)</p>
+        <p>Based on ${measurements.length} historical measurements</p>
     `;
     resultDiv.classList.add('has-prediction');
 }
@@ -145,6 +166,33 @@ function updateChartWithPrediction(regression, futureTime, predictedValue) {
     
     chart.data.datasets[1].data = predictionLine;
     chart.options.scales.x.max = futureTime;
+    chart.update();
+}
+
+// Update the data table
+function updateTable() {
+    const tbody = document.querySelector('#dataTable tbody');
+    tbody.innerHTML = '';
+    
+    measurements.forEach(m => {
+        const row = tbody.insertRow();
+        row.insertCell().textContent = m.time;
+        row.insertCell().textContent = m.do_level.toFixed(2);
+        row.insertCell().textContent = m.turbidity.toFixed(2);
+        row.insertCell().textContent = m.ph.toFixed(2);
+    });
+}
+
+// Update the chart
+function updateChart() {
+    chart.data.datasets[0].data = measurements.map(m => ({
+        x: m.time,
+        y: m.do_level
+    }));
+    
+    // Reset prediction line when new data is added
+    chart.data.datasets[1].data = [];
+    
     chart.update();
 }
 
@@ -166,17 +214,6 @@ function linearRegression(x, y) {
     return { slope, intercept };
 }
 
-// Update data summary
-function updateDataSummary() {
-    if (measurements.length === 0) return;
-    
-    const do_levels = measurements.map(m => m.do_level);
-    document.getElementById('avgDO').textContent = (do_levels.reduce((a, b) => a + b, 0) / do_levels.length).toFixed(2);
-    document.getElementById('minDO').textContent = Math.min(...do_levels).toFixed(2);
-    document.getElementById('maxDO').textContent = Math.max(...do_levels).toFixed(2);
-    document.getElementById('dataPoints').textContent = measurements.length;
-}
-
 // Handle CSV upload
 function uploadCSV() {
     const fileInput = document.getElementById('csvFile');
@@ -193,19 +230,28 @@ function uploadCSV() {
         skipEmptyLines: true,
         complete: function(results) {
             if (results.data && results.data.length > 0) {
+                // Clear existing measurements
                 measurements = [];
                 
+                // Process each row
                 results.data.forEach((row, index) => {
                     const timeValue = row.time || row.Time || row.TIME;
                     const doValue = row.do_level || row.DO || row['Dissolved Oxygen'] || row.do;
+                    const turbidityValue = row.turbidity || row.Turbidity || row.TURBIDITY;
+                    const phValue = row.ph || row.pH || row.PH;
                     
-                    if (timeValue !== undefined && doValue !== undefined) {
+                    if (timeValue !== undefined && doValue !== undefined && 
+                        turbidityValue !== undefined && phValue !== undefined) {
+                        
                         const measurement = {
                             time: parseFloat(timeValue),
-                            do_level: parseFloat(doValue)
+                            do_level: parseFloat(doValue),
+                            turbidity: parseFloat(turbidityValue),
+                            ph: parseFloat(phValue)
                         };
                         
-                        if (!isNaN(measurement.time) && !isNaN(measurement.do_level)) {
+                        if (!isNaN(measurement.time) && !isNaN(measurement.do_level) && 
+                            !isNaN(measurement.turbidity) && !isNaN(measurement.ph)) {
                             measurements.push(measurement);
                         }
                     }
@@ -214,24 +260,11 @@ function uploadCSV() {
                 // Sort measurements by time
                 measurements.sort((a, b) => a.time - b.time);
                 
-                // Update chart with historical data
-                chart.data.datasets[0].data = measurements.map(m => ({
-                    x: m.time,
-                    y: m.do_level
-                }));
+                // Update displays
+                updateTable();
+                updateChart();
                 
-                // Reset prediction line
-                chart.data.datasets[1].data = [];
-                
-                // Update chart scales
-                const maxTime = Math.max(...measurements.map(m => m.time));
-                chart.options.scales.x.max = maxTime;
-                chart.update();
-                
-                // Update summary statistics
-                updateDataSummary();
-                
-                alert('Data loaded successfully!');
+                alert('CSV data loaded successfully!');
             } else {
                 alert('No valid data found in CSV file');
             }
@@ -246,4 +279,6 @@ function uploadCSV() {
 // Initialize the chart when the page loads
 document.addEventListener('DOMContentLoaded', function() {
     initChart();
+    // Start with manual entry tab active
+    switchTab('manual');
 });

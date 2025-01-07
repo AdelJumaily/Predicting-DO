@@ -27,6 +27,37 @@ body {
     color: #333;
 }
 
+.tabs {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.tab-btn {
+    padding: 10px 20px;
+    border: none;
+    background: #f0f0f0;
+    cursor: pointer;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.tab-btn.active {
+    background: #4CAF50;
+    color: white;
+}
+
+.tab-content {
+    display: none;
+    padding: 20px;
+    background: #f8f8f8;
+    border-radius: 4px;
+}
+
+.tab-content.active {
+    display: block;
+}
+
 .form-group {
     margin-bottom: 15px;
 }
@@ -37,26 +68,18 @@ body {
     align-items: center;
 }
 
-.time-inputs input,
-.time-inputs select {
-    padding: 8px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-}
-
-.time-inputs input {
-    width: 120px;
-}
-
-.time-inputs select {
-    width: 100px;
-}
-
 label {
     display: block;
     margin-bottom: 5px;
     font-weight: bold;
     color: #555;
+}
+
+input[type="number"], select {
+    width: 200px;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
 }
 
 button {
@@ -91,12 +114,7 @@ button:hover {
     border-left: 4px solid #4CAF50;
 }
 
-.prediction-result h3 {
-    margin-top: 0;
-    color: #333;
-}
-
-.data-summary {
+.data-section {
     background-color: white;
     padding: 20px;
     border-radius: 8px;
@@ -119,15 +137,4 @@ th {
     background-color: #f5f5f5;
     font-weight: bold;
     color: #333;
-}
-
-.prediction-inputs {
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-}
-
-#prediction-result.has-prediction {
-    background-color: #e8f5e9;
-    border-left: 4px solid #2e7d32;
 }

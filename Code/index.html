@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Lake Monitoring System</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.0/chart.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+    <link rel="stylesheet" href="main.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Lake Monitoring System</h1>
+        
+        <div class="form-section">
+            <h2>Upload Data</h2>
+            <div class="form-group">
+                <label for="csvFile">Upload CSV File:</label>
+                <input type="file" id="csvFile" accept=".csv" />
+                <button onclick="uploadCSV()">Upload CSV</button>
+            </div>
+        </div>
+
+        <div class="form-section">
+            <h2>Manual Entry</h2>
+            <div class="form-group">
+                <label for="time">Time (minutes):</label>
+                <input type="number" id="time" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="do">Dissolved Oxygen (mg/L):</label>
+                <input type="number" id="do" step="0.1" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="turbidity">Turbidity (NTU):</label>
+                <input type="number" id="turbidity" step="0.1" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="ph">pH:</label>
+                <input type="number" id="ph" step="0.1" required>
+            </div>
+            
+            <button onclick="addMeasurement()">Add Measurement</button>
+            <button onclick="predictFuture()">Predict Future DO</button>
+        </div>
+        
+        <div class="chart-container">
+            <canvas id="measurementChart"></canvas>
+        </div>
+        
+        <table id="dataTable">
+            <thead>
+                <tr>
+                    <th>Time (min)</th>
+                    <th>DO (mg/L)</th>
+                    <th>Turbidity (NTU)</th>
+                    <th>pH</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+    <script src="main.js"></script>
+</body>
+</html>

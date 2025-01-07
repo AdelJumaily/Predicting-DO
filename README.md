@@ -1,4 +1,4 @@
-# Lake Monitoring System
+# Lake Monitoring System by Micah
 
 A web-based application for monitoring and analyzing lake water quality parameters including dissolved oxygen, turbidity, and pH levels.
 

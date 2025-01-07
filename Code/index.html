@@ -1,17 +1,17 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Lake Monitoring System</title>
+    <title>Lake DO Prediction System</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.0/chart.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
     <link rel="stylesheet" href="main.css">
 </head>
 <body>
     <div class="container">
-        <h1>Lake Monitoring System</h1>
+        <h1>Lake DO Prediction System</h1>
         
         <div class="form-section">
-            <h2>Upload Data</h2>
+            <h2>Upload Historical Data</h2>
             <div class="form-group">
                 <label for="csvFile">Upload CSV File:</label>
                 <input type="file" id="csvFile" accept=".csv" />
@@ -20,46 +20,50 @@
         </div>
 
         <div class="form-section">
-            <h2>Manual Entry</h2>
-            <div class="form-group">
-                <label for="time">Time (minutes):</label>
-                <input type="number" id="time" required>
+            <h2>Predict Future DO Levels</h2>
+            <div class="prediction-inputs">
+                <div class="form-group">
+                    <label for="predictionTime">Prediction Time:</label>
+                    <div class="time-inputs">
+                        <input type="number" id="timeValue" min="1" placeholder="Enter value">
+                        <select id="timeUnit">
+                            <option value="hours">Hours</option>
+                            <option value="days">Days</option>
+                            <option value="weeks">Weeks</option>
+                            <option value="months">Months</option>
+                            <option value="years">Years</option>
+                        </select>
+                    </div>
+                </div>
+                <button onclick="predictDO()">Predict DO Level</button>
             </div>
-            
-            <div class="form-group">
-                <label for="do">Dissolved Oxygen (mg/L):</label>
-                <input type="number" id="do" step="0.1" required>
+            <div id="prediction-result" class="prediction-result">
+                <h3>Prediction Results:</h3>
+                <p>Upload data and make a prediction to see results.</p>
             </div>
-            
-            <div class="form-group">
-                <label for="turbidity">Turbidity (NTU):</label>
-                <input type="number" id="turbidity" step="0.1" required>
-            </div>
-            
-            <div class="form-group">
-                <label for="ph">pH:</label>
-                <input type="number" id="ph" step="0.1" required>
-            </div>
-            
-            <button onclick="addMeasurement()">Add Measurement</button>
-            <button onclick="predictFuture()">Predict Future DO</button>
         </div>
         
         <div class="chart-container">
             <canvas id="measurementChart"></canvas>
         </div>
         
-        <table id="dataTable">
-            <thead>
-                <tr>
-                    <th>Time (min)</th>
-                    <th>DO (mg/L)</th>
-                    <th>Turbidity (NTU)</th>
-                    <th>pH</th>
-                </tr>
-            </thead>
-            <tbody></tbody>
-        </table>
+        <div class="data-summary">
+            <h2>Data Summary</h2>
+            <table id="dataTable">
+                <thead>
+                    <tr>
+                        <th>Metric</th>
+                        <th>Value</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td>Average DO Level</td><td id="avgDO">-</td></tr>
+                    <tr><td>Minimum DO Level</td><td id="minDO">-</td></tr>
+                    <tr><td>Maximum DO Level</td><td id="maxDO">-</td></tr>
+                    <tr><td>Data Points</td><td id="dataPoints">-</td></tr>
+                </tbody>
+            </table>
+        </div>
     </div>
 
     <script src="main.js"></script>
